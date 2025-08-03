@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Global Climate Solution</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <header class="admin-header">
+            <div class="admin-nav">
+                <div class="logo-section">
+                    <div class="logo-icon">🌍</div>
+                    <h1>GCS Admin Dashboard</h1>
+                </div>
+                <div class="nav-actions">
+                    <button onclick="refreshData()" class="refresh-btn">🔄 Refresh</button>
+                    <button onclick="window.location.href='index.html'" class="home-btn">🏠 Dashboard</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-content">
+                    <h3 id="totalUsers">Loading...</h3>
+                    <p>Total Users</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">💰</div>
+                <div class="stat-content">
+                    <h3 id="totalSubscriptions">Loading...</h3>
+                    <p>Total Subscriptions</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📧</div>
+                <div class="stat-content">
+                    <h3 id="emailsSent">Loading...</h3>
+                    <p>Emails Sent</p>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📈</div>
+                <div class="stat-content">
+                    <h3 id="conversionRate">Loading...</h3>
+                    <p>Conversion Rate</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-content">
+            <!-- Recent Users -->
+            <div class="admin-section">
+                <h2>📋 Recent User Registrations</h2>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Company</th>
+                                <th>Registered</th>
+                                <th>Last Login</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">
+                                    <div class="loading-spinner">⏳ Loading users...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Subscriptions -->
+            <div class="admin-section">
+                <h2>💰 Recent Subscriptions</h2>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Plan</th>
+                                <th>Price</th>
+                                <th>Date</th>
+                                <th>Email Sent</th>
+                                <th>Compliance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subscriptionsTable">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px;">
+                                    <div class="loading-spinner">⏳ Loading subscriptions...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Email Logs -->
+            <div class="admin-section">
+                <h2>📧 Email Notification Logs</h2>
+                <div class="table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>User</th>
+                                <th>Status</th>
+                                <th>Sent At</th>
+                                <th>Response</th>
+                            </tr>
+                        </thead>
+                        <tbody id="emailLogsTable">
+                            <tr>
+                                <td colspan="5" style="text-align: center; padding: 40px;">
+                                    <div class="loading-spinner">⏳ Loading email logs...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+        }
+
+        .logo-section h1 {
+            color: #1f2937;
+            font-size: 24px;
+            margin: 0;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .refresh-btn, .home-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .home-btn {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .home-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-icon {
+            font-size: 32px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+        }
+
+        .stat-content h3 {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 0 0 4px 0;
+        }
+
+        .stat-content p {
+            color: #6b7280;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .admin-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .admin-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .admin-section h2 {
+            color: #1f2937;
+            margin: 0 0 20px 0;
+            font-size: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .admin-table th {
+            background: #f8fafc;
+            color: #374151;
+            font-weight: 600;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .admin-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #6b7280;
+        }
+
+        .admin-table tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-inactive {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .plan-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .plan-basic {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .plan-pro {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .plan-ultra {
+            background: #f3e8ff;
+            color: #7c3aed;
+        }
+
+        .loading-spinner {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 10px;
+            }
+
+            .admin-nav {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-container {
+                font-size: 12px;
+            }
+        }
+    </style>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://gihkxysnsahfqxsjiomf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpaGt4eXNuc2FoZnF4c2ppb21mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMTM4MTQsImV4cCI6MjA2OTc4OTgxNH0.C3tHslZt7PH3SZFWIRSvWf7jjn5UOKivNEhZrIW49Oo';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load stats
+                await loadStats();
+                
+                // Load tables
+                await loadUsers();
+                await loadSubscriptions();
+                await loadEmailLogs();
+                
+                console.log('✅ Dashboard data loaded successfully');
+            } catch (error) {
+                console.error('❌ Failed to load dashboard data:', error);
+            }
+        }
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                // Get total users
+                const { count: userCount } = await supabase
+                    .from('users')
+                    .select('*', { count: 'exact', head: true });
+
+                // Get total subscriptions
+                const { count: subCount } = await supabase
+                    .from('subscriptions')
+                    .select('*', { count: 'exact', head: true });
+
+                // Get emails sent
+                const { count: emailCount } = await supabase
+                    .from('email_logs')
+                    .select('*', { count: 'exact', head: true });
+
+                // Calculate conversion rate
+                const conversionRate = userCount > 0 ? ((subCount / userCount) * 100).toFixed(1) : '0.0';
+
+                // Update UI
+                document.getElementById('totalUsers').textContent = userCount || '0';
+                document.getElementById('totalSubscriptions').textContent = subCount || '0';
+                document.getElementById('emailsSent').textContent = emailCount || '0';
+                document.getElementById('conversionRate').textContent = conversionRate + '%';
+
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // Load users table
+        async function loadUsers() {
+            try {
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('usersTable');
+                
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">No users found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = users.map(user => `
+                    <tr>
+                        <td><strong>${user.name}</strong></td>
+                        <td>${user.email}</td>
+                        <td>${user.company || 'N/A'}</td>
+                        <td>${formatDate(user.created_at)}</td>
+                        <td>${user.last_login ? formatDate(user.last_login) : 'Never'}</td>
+                        <td>
+                            <span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">
+                                ${user.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load users:', error);
+                document.getElementById('usersTable').innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #ef4444;">Failed to load users</td></tr>';
+            }
+        }
+
+        // Load subscriptions table
+        async function loadSubscriptions() {
+            try {
+                const { data: subscriptions, error } = await supabase
+                    .from('subscriptions')
+                    .select(`
+                        *,
+                        users (name, email)
+                    `)
+                    .order('subscribed_at', { ascending: false })
+                    .limit(15);
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('subscriptionsTable');
+                
+                if (subscriptions.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #9ca3af;">No subscriptions found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = subscriptions.map(sub => `
+                    <tr>
+                        <td>
+                            <strong>${sub.users?.name || sub.metadata?.user_name || 'Unknown'}</strong>
+                            <br>
+                            <small style="color: #9ca3af;">${sub.users?.email || sub.metadata?.user_email || 'N/A'}</small>
+                        </td>
+                        <td>
+                            <span class="plan-badge plan-${sub.plan_type}">
+                                ${sub.plan_type}
+                            </span>
+                        </td>
+                        <td><strong>${sub.plan_price}</strong></td>
+                        <td>${formatDate(sub.subscribed_at)}</td>
+                        <td>
+                            <span class="status-badge ${sub.email_notification_sent ? 'status-active' : 'status-inactive'}">
+                                ${sub.email_notification_sent ? '✅ Sent' : '❌ Failed'}
+                            </span>
+                        </td>
+                        <td>${sub.compliance_type || 'N/A'}</td>
+                        <td>
+                            <span class="status-badge ${sub.status === 'active' ? 'status-active' : 'status-inactive'}">
+                                ${sub.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load subscriptions:', error);
+                document.getElementById('subscriptionsTable').innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 40px; color: #ef4444;">Failed to load subscriptions</td></tr>';
+            }
+        }
+
+        // Load email logs table
+        async function loadEmailLogs() {
+            try {
+                const { data: emailLogs, error } = await supabase
+                    .from('email_logs')
+                    .select(`
+                        *,
+                        subscriptions (plan_type),
+                        users (name, email)
+                    `)
+                    .order('sent_at', { ascending: false })
+                    .limit(10);
+
+                if (error) throw error;
+
+                const tbody = document.getElementById('emailLogsTable');
+                
+                if (emailLogs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #9ca3af;">No email logs found</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = emailLogs.map(log => `
+                    <tr>
+                        <td>
+                            <span class="plan-badge plan-${log.subscriptions?.plan_type || 'basic'}">
+                                ${log.email_type}
+                            </span>
+                        </td>
+                        <td>
+                            <strong>${log.users?.name || 'Unknown'}</strong>
+                            <br>
+                            <small style="color: #9ca3af;">${log.users?.email || 'N/A'}</small>
+                        </td>
+                        <td>
+                            <span class="status-badge ${log.email_status === 'sent' ? 'status-active' : 'status-inactive'}">
+                                ${log.email_status}
+                            </span>
+                        </td>
+                        <td>${formatDate(log.sent_at)}</td>
+                        <td>
+                            ${log.email_response ? 
+                                `<details>
+                                    <summary style="cursor: pointer; color: #3b82f6;">View Response</summary>
+                                    <pre style="font-size: 11px; margin-top: 8px; color: #6b7280;">${JSON.stringify(log.email_response, null, 2)}</pre>
+                                </details>` 
+                                : 'N/A'
+                            }
+                        </td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error('Failed to load email logs:', error);
+                document.getElementById('emailLogsTable').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 40px; color: #ef4444;">Failed to load email logs</td></tr>';
+            }
+        }
+
+        // Helper function to format dates
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Refresh data
+        function refreshData() {
+            console.log('🔄 Refreshing dashboard data...');
+            loadDashboardData();
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Loading admin dashboard...');
+            loadDashboardData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(refreshData, 30000);
+        });
+    </script>
+</body>
+</html>

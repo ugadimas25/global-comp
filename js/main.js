@@ -1,20 +1,135 @@
 // Global Climate Solution - Main JavaScript Functions
 
+// Supabase Configuration
+const SUPABASE_URL = 'https://gihkxysnsahfqxsjiomf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpaGt4eXNuc2FoZnF4c2ppb21mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMTM4MTQsImV4cCI6MjA2OTc4OTgxNH0.C3tHslZt7PH3SZFWIRSvWf7jjn5UOKivNEhZrIW49Oo';
+
 // EmailJS Configuration
 const EMAILJS_CONFIG = {
   serviceID: 'service_8vvi6bk',       // ✅ Service ID dari Gmail service
-  templateID: 'template_5y8bbkk',      // Ganti dengan Template ID dari step 2
-  userID: 'f3guQ1_2BbPuikway',             // Ganti dengan User ID (Public Key) dari step 3
+  templateID: 'template_5y8bbkk',      // ✅ Template ID yang sudah benar
+  userID: 'f3guQ1_2BbPuikway',         // ✅ User ID yang sudah benar
   adminEmail: 'ugadimas@gmail.com'
 };
 
-// Initialize EmailJS when DOM loads
+// Initialize EmailJS and Supabase when DOM loads
 document.addEventListener('DOMContentLoaded', () => {
   // Initialize EmailJS
   if (typeof emailjs !== 'undefined') {
     emailjs.init(EMAILJS_CONFIG.userID);
+    console.log('✅ EmailJS initialized');
   }
+
+  // Initialize Supabase client
+  if (typeof window.supabase !== 'undefined') {
+    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('✅ Supabase initialized');
+  }
+
+  // Check if user is admin and show admin dashboard button
+  checkAdminAccess();
 });
+
+// Check if current user is admin (ugadimas) and show admin dashboard button
+function checkAdminAccess() {
+  const username = localStorage.getItem('whispUsername');
+  const isLoggedIn = localStorage.getItem('whispLoggedIn');
+  
+  if (isLoggedIn === 'true' && username === 'ugadimas') {
+    const adminBtn = document.getElementById('adminDashboardBtn');
+    if (adminBtn) {
+      adminBtn.style.display = 'flex';
+      console.log('✅ Admin access granted for ugadimas');
+    }
+  } else {
+    const adminBtn = document.getElementById('adminDashboardBtn');
+    if (adminBtn) {
+      adminBtn.style.display = 'none';
+    }
+  }
+}
+
+// Function to open admin dashboard
+function openAdminDashboard() {
+  // Double check admin access
+  const username = localStorage.getItem('whispUsername');
+  const isLoggedIn = localStorage.getItem('whispLoggedIn');
+  
+  if (isLoggedIn === 'true' && username === 'ugadimas') {
+    window.location.href = 'admin.html';
+  } else {
+    alert('⚠️ Access denied. Admin privileges required.');
+  }
+}
+
+// Function to save subscription to database
+async function saveSubscriptionToDatabase(planType, userInfo, emailSent) {
+  try {
+    if (!window.supabaseClient) {
+      console.log('⚠️ Supabase not initialized, skipping database save');
+      return false;
+    }
+
+    // Get user data from localStorage
+    const userData = JSON.parse(localStorage.getItem('whispUserData') || '{}');
+    const compliance = localStorage.getItem('selectedCompliance') || 'EUDR';
+
+    const subscriptionData = {
+      user_id: userData.id || null,
+      plan_type: planType,
+      plan_price: planType === 'pro' ? '$25.00/month' : '$100.00/month',
+      email_notification_sent: emailSent,
+      compliance_type: compliance,
+      metadata: {
+        user_name: userInfo.username,
+        user_email: userInfo.email,
+        timestamp: userInfo.timestamp,
+        user_agent: navigator.userAgent,
+        referrer: document.referrer || 'direct'
+      }
+    };
+
+    // Insert subscription record
+    const { data: subscription, error: subError } = await window.supabaseClient
+      .from('subscriptions')
+      .insert([subscriptionData])
+      .select()
+      .single();
+
+    if (subError) {
+      console.error('❌ Failed to save subscription:', subError);
+      return false;
+    }
+
+    console.log('✅ Subscription saved to database:', subscription);
+
+    // Also log the email notification
+    if (emailSent) {
+      const { error: emailError } = await window.supabaseClient
+        .from('email_logs')
+        .insert([
+          {
+            subscription_id: subscription.id,
+            user_id: userData.id || null,
+            email_type: 'subscription_notification',
+            email_status: 'sent'
+          }
+        ]);
+
+      if (emailError) {
+        console.error('❌ Failed to log email:', emailError);
+      } else {
+        console.log('✅ Email notification logged to database');
+      }
+    }
+
+    return true;
+
+  } catch (error) {
+    console.error('❌ Database save error:', error);
+    return false;
+  }
+}
 
 // Function to send email notification
 async function sendSubscriptionNotification(planType, userInfo) {
@@ -183,47 +298,83 @@ function selectPlan(planType) {
   if (planType === 'pro' || planType === 'ultra') {
     // Get user info
     const username = localStorage.getItem('whispUsername') || 'Anonymous User';
+    const userEmail = localStorage.getItem('whispEmail') || 'Not provided';
     const userInfo = {
       username: username,
-      email: 'Not provided', // You can add email collection later
+      email: userEmail,
       planType: planType,
       timestamp: new Date().toISOString()
     };
     
     // Send email notification
     sendSubscriptionNotification(planType, userInfo).then(success => {
-      if (success) {
-        console.log('✅ Email notification sent to admin');
-        
-        // Show success message to user
-        setTimeout(() => {
-          const notification = document.createElement('div');
-          notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 10000;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            animation: slideIn 0.3s ease-out;
-          `;
-          notification.innerHTML = '📧 Admin telah diberitahu tentang subscription Anda!';
+      // Save to database
+      saveSubscriptionToDatabase(planType, userInfo, success).then(dbSaved => {
+        if (success) {
+          console.log('✅ Email notification sent to admin');
           
-          document.body.appendChild(notification);
-          
+          // Show enhanced success message
           setTimeout(() => {
-            if (notification.parentNode) {
-              notification.remove();
-            }
-          }, 4000);
-        }, 1000);
-      } else {
-        console.log('⚠️ Email notification failed, but subscription recorded');
-      }
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+              color: white;
+              padding: 12px 20px;
+              border-radius: 8px;
+              z-index: 10000;
+              font-weight: bold;
+              box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+              animation: slideIn 0.3s ease-out;
+              max-width: 300px;
+            `;
+            notification.innerHTML = dbSaved 
+              ? '📧 Admin diberitahu & data tersimpan di database!'
+              : '📧 Admin diberitahu tentang subscription Anda!';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+              if (notification.parentNode) {
+                notification.remove();
+              }
+            }, 5000);
+          }, 1000);
+        } else {
+          console.log('⚠️ Email notification failed, but subscription recorded in database');
+          
+          if (dbSaved) {
+            setTimeout(() => {
+              const notification = document.createElement('div');
+              notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-weight: bold;
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+              `;
+              notification.innerHTML = '⚠️ Subscription saved to database (email pending)';
+              
+              document.body.appendChild(notification);
+              
+              setTimeout(() => {
+                if (notification.parentNode) {
+                  notification.remove();
+                }
+              }, 4000);
+            }, 1000);
+          }
+        }
+      });
     });
   }
   

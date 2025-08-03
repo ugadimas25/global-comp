@@ -10,6 +10,9 @@
   
   <!-- EmailJS -->
   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -21,6 +24,12 @@
     </div>
     
     <div class="nav-right">
+      <!-- Admin Dashboard Button (only for ugadimas) -->
+      <button id="adminDashboardBtn" class="admin-dashboard-btn" onclick="openAdminDashboard()" style="display: none;">
+        <span>⚙️</span>
+        Dashboard
+      </button>
+      
       <!-- Climate Solution Dropdown -->
       <div class="compliance-dropdown">
         <button class="compliance-btn" onclick="toggleComplianceDropdown()">
