@@ -296,12 +296,10 @@ class WhispSubmitPage {
 
     // Save current results to localStorage before navigating
     localStorage.setItem('whispAnalysisResults', JSON.stringify(this.currentResults));
+    localStorage.setItem('whispMapDataTimestamp', Date.now().toString());
     
-    // Encode the results data for URL transmission
-    const encodedData = encodeURIComponent(JSON.stringify(this.currentResults));
-    
-    // Open map page in new tab with data
-    const mapUrl = `map.html?data=${encodedData}`;
+    // Open map page in new tab - data will be loaded from localStorage
+    const mapUrl = `map.html`;
     window.open(mapUrl, '_blank');
   }
 

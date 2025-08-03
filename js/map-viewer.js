@@ -355,29 +355,55 @@ class WhispMapViewer {
   }
 
   loadMapData() {
+    // First, try to load data from localStorage (priority)
+    const storedResults = localStorage.getItem('whispAnalysisResults');
+    const dataTimestamp = localStorage.getItem('whispMapDataTimestamp');
+    
+    if (storedResults) {
+      try {
+        this.showLoading(true);
+        const geoData = JSON.parse(storedResults);
+        
+        console.log('Loading map data from localStorage');
+        this.displayGeoData(geoData);
+        
+        // Clear the timestamp to prevent reloading old data
+        localStorage.removeItem('whispMapDataTimestamp');
+        return;
+      } catch (error) {
+        console.error('Error parsing stored map data:', error);
+        localStorage.removeItem('whispAnalysisResults');
+        localStorage.removeItem('whispMapDataTimestamp');
+      } finally {
+        this.showLoading(false);
+      }
+    }
+    
+    // Fallback: try to load from URL parameters (for backward compatibility)
     const urlParams = new URLSearchParams(window.location.search);
     const data = urlParams.get('data');
     
-    if (!data) {
-      console.log('No map data provided in URL parameters, showing overlay layers only');
-      // Don't show error, just continue with overlay layers
+    if (data) {
+      try {
+        this.showLoading(true);
+        const geoData = JSON.parse(decodeURIComponent(data));
+        
+        console.log('Loading map data from URL parameters');
+        // Store the data in localStorage for persistence
+        localStorage.setItem('whispAnalysisResults', JSON.stringify(geoData));
+        
+        this.displayGeoData(geoData);
+      } catch (error) {
+        console.error('Error parsing URL map data:', error);
+        console.log('Continuing with overlay layers only');
+      } finally {
+        this.showLoading(false);
+      }
       return;
     }
-
-    try {
-      this.showLoading(true);
-      const geoData = JSON.parse(decodeURIComponent(data));
-      
-      // Store the data in localStorage for persistence when going back
-      localStorage.setItem('whispAnalysisResults', JSON.stringify(geoData));
-      
-      this.displayGeoData(geoData);
-    } catch (error) {
-      console.error('Error parsing map data:', error);
-      console.log('Continuing with overlay layers only');
-    } finally {
-      this.showLoading(false);
-    }
+    
+    // No data available - show overlay layers only
+    console.log('No map data available, showing overlay layers only');
   }
 
   displayGeoData(data) {
