@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Forest Stewardship Council - Whisp Geospatial Tool</title>
+  
+  <!-- Authentication Check -->
+  <script>
+    // Check authentication before loading page
+    window.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem('whispLoggedIn');
+      const loginTime = localStorage.getItem('whispLoginTime');
+      
+      if (!isLoggedIn || isLoggedIn !== 'true') {
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      if (loginTime) {
+        const loginDate = new Date(loginTime);
+        const now = new Date();
+        const diffHours = (now - loginDate) / (1000 * 60 * 60);
+        
+        if (diffHours >= 24) {
+          localStorage.removeItem('whispLoggedIn');
+          localStorage.removeItem('whispUsername');
+          localStorage.removeItem('whispLoginTime');
+          window.location.href = 'login.html';
+          return;
+        }
+      }
+    });
+  </script>
+  
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-nav {
+      background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid #4b5563;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      background: rgba(99, 102, 241, 0.8);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn:hover {
+      background: rgba(99, 102, 241, 1);
+      transform: translateY(-1px);
+    }
+
+    .logout-btn {
+      background: rgba(220, 38, 38, 0.8);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      font-size: 14px;
+      box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    }
+
+    .logout-btn:hover {
+      background: rgba(220, 38, 38, 1);
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 40px 20px;
+      text-align: center;
+    }
+
+    .maintenance-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 60px 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .maintenance-icon {
+      font-size: 80px;
+      margin-bottom: 30px;
+      display: block;
+    }
+
+    .maintenance-title {
+      font-size: 32px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .maintenance-subtitle {
+      font-size: 18px;
+      color: #3b82f6;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .maintenance-message {
+      font-size: 16px;
+      color: #d1d5db;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 158, 11, 0.2);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+      padding: 12px 20px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+
+    .feature-list {
+      text-align: left;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 30px;
+    }
+
+    .feature-list h4 {
+      color: #3b82f6;
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .feature-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .feature-list li {
+      color: #d1d5db;
+      padding: 8px 0;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .feature-list li:before {
+      content: "🏆";
+      font-size: 16px;
+    }
+
+    .back-home-btn {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .back-home-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    }
+
+    @media (max-width: 768px) {
+      .maintenance-card {
+        padding: 40px 20px;
+        margin: 20px;
+      }
+      
+      .maintenance-icon {
+        font-size: 60px;
+      }
+      
+      .maintenance-title {
+        font-size: 24px;
+      }
+      
+      .maintenance-subtitle {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <div class="top-nav">
+    <div class="nav-left">
+      <a href="index.html" class="back-btn">
+        <span>←</span>
+        Back to Home
+      </a>
+      <h3 style="margin: 0; color: white; font-size: 18px;">Forest Stewardship Council</h3>
+    </div>
+    
+    <div class="nav-right">
+      <button class="logout-btn" onclick="logout()">
+        🚪 Logout
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="maintenance-card">
+      <span class="maintenance-icon">🏆</span>
+      
+      <h1 class="maintenance-title">Compliance Analysis for<br>Forest Stewardship Council</h1>
+      <p class="maintenance-subtitle">Responsible Forest Management</p>
+      
+      <div class="status-badge">
+        <span>⚠️</span>
+        Under Maintenance
+      </div>
+      
+      <p class="maintenance-message">
+        We're currently developing our Forest Stewardship Council (FSC) compliance analysis system to help you verify responsible forest management practices. Our technical team is integrating FSC standards with advanced geospatial analysis capabilities.
+      </p>
+
+      <div class="feature-list">
+        <h4>Coming Soon Features:</h4>
+        <ul>
+          <li>FSC certification verification and tracking</li>
+          <li>Responsible forest management assessment</li>
+          <li>Chain of custody compliance monitoring</li>
+          <li>Forest health and biodiversity analysis</li>
+          <li>Sustainable harvesting practice evaluation</li>
+          <li>Automated FSC compliance reporting</li>
+        </ul>
+      </div>
+
+      <a href="index.html" class="back-home-btn">
+        <span>🏠</span>
+        Return to Main Dashboard
+      </a>
+    </div>
+  </div>
+
+  <script>
+    function logout() {
+      // Clear authentication data
+      localStorage.removeItem('whispLoggedIn');
+      localStorage.removeItem('whispUsername');
+      localStorage.removeItem('whispLoginTime');
+      localStorage.removeItem('selectedCompliance');
+      localStorage.removeItem('selectedPlan');
+      
+      // Redirect to login page
+      window.location.href = 'login.html';
+    }
+  </script>
+
+</body>
+</html>

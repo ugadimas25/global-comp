@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whisp Geospatial Tool</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .notice {
+      background-color: #cce0ff;
+      color: #003366;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .container {
+      margin: 30px auto;
+      max-width: 700px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .description {
+      font-size: 15px;
+      color: #ccc;
+      line-height: 1.6;
+    }
+
+    a {
+      color: #4da6ff;
+    }
+
+    .buttons {
+      margin: 20px;
+    }
+
+    .buttons button {
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login {
+      background-color: #3366ff;
+      color: white;
+      border: none;
+    }
+
+    .register {
+      background-color: #00cc66;
+      color: white;
+      border: none;
+    }
+
+    .submit-box {
+      background-color: #1a1a1a;
+      border-radius: 6px;
+      padding: 20px;
+      margin-top: 30px;
+    }
+
+    .tab-buttons {
+      margin-bottom: 10px;
+    }
+
+    .tab-buttons button {
+      margin: 0 5px;
+      padding: 8px 12px;
+      background-color: #333;
+      color: white;
+      border: none;
+    }
+
+    .drop-zone {
+      margin: 20px auto;
+      border: 2px dashed #555;
+      padding: 30px;
+      color: #888;
+      cursor: pointer;
+    }
+
+    .action-buttons {
+      margin-top: 15px;
+    }
+
+    .action-buttons button {
+      margin: 5px;
+      padding: 10px 16px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .example {
+      background-color: #3366ff;
+      color: white;
+    }
+
+    .clear {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .analyze {
+      background-color: #00cc66;
+      color: white;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="notice">
+    Please see <a href="#">update notice</a> for important changes to the API.
+  </div>
+
+  <div class="container">
+    <h1>Welcome Global Compliance Tools</h1>
+    <p class="description">
+      Welcome to Whisp, a geospatial analysis tool designed to support zero-deforestation regulation claims. 
+      Upload your geometries in WKT or GeoJSON format here to receive a plot- or point-based analysis from our 
+      <a href="#">API</a>, calculated from carefully selected 
+      <a href="#">global and regional map datasets</a> processed via Google Earth Engine.
+    </p>
+
+    <div class="buttons">
+      <button class="login">Login</button>
+      <button class="register">Register</button>
+    </div>
+
+    <div class="submit-box">
+      <h2>Submit Geometry</h2>
+      <div class="tab-buttons">
+        <button>Submit Geometry</button>
+        <button>Submit Geo IDs</button>
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        Drag or click to upload a file<br/>
+        <small>Only .txt, .json and .geojson files are accepted.</small>
+        <input type="file" id="fileInput" accept=".json,.geojson,.txt,application/json,application/geo+json,text/plain" style="display: none;" />
+      </div>
+
+      <div class="action-buttons">
+        <button class="example">📥 Example</button>
+        <button class="clear" onclick="clearUpload()">Clear</button>
+        <button class="analyze" onclick="analyzeUpload()">Analyze</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="#" style="color:#4da6ff;">Terms of Service</a>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById("dropZone");
+    const fileInput = document.getElementById("fileInput");
+
+    // Debug: Check if elements are found
+    console.log('Drop zone found:', !!dropZone);
+    console.log('File input found:', !!fileInput);
+
+    if (!dropZone || !fileInput) {
+      console.error('Required elements not found!');
+      alert('Error: Upload elements not found. Please refresh the page.');
+    }
+
+    dropZone.addEventListener("click", () => {
+      console.log('Drop zone clicked');
+      fileInput.click();
+    });
+
+    dropZone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#4da6ff";
+      console.log('Drag over');
+    });
+
+    dropZone.addEventListener("dragleave", () => {
+      dropZone.style.borderColor = "#555";
+      console.log('Drag leave');
+    });
+
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.style.borderColor = "#555";
+      const file = e.dataTransfer.files[0];
+      console.log('File dropped:', file);
+      handleFile(file);
+    });
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      console.log('File selected via input:', file);
+      handleFile(file);
+    });
+
+    function handleFile(file) {
+      if (!file) return;
+      
+      console.log('File selected:', file.name, 'Type:', file.type);
+      
+      const validTypes = ['application/json', 'application/geo+json', 'text/plain'];
+      const validExtensions = ['.json', '.geojson', '.txt'];
+      
+      const isValidType = validTypes.includes(file.type);
+      const isValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+      
+      if (!isValidType && !isValidExtension) {
+        alert(`Invalid file type. Please upload: ${validExtensions.join(', ')} files only.`);
+        return;
+      }
+      
+      dropZone.innerHTML = `📄 File uploaded: ${file.name}`;
+      dropZone.style.borderColor = "#00cc66";
+    }
+
+    function clearUpload() {
+      dropZone.innerHTML = 'Drag or click to upload a file<br/><small>Only .txt, .json and .geojson files are accepted.</small>';
+      dropZone.style.borderColor = "#555";
+      fileInput.value = "";
+    }
+
+    function analyzeUpload() {
+      console.log('Analyze button clicked');
+      console.log('Files in input:', fileInput.files);
+      
+      if (!fileInput.files.length) {
+        alert("Please upload a file first.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      console.log('File to analyze:', file.name, file.size, 'bytes');
+      
+      const apiUrl = "https://gis-development.koltivaapi.com/data/v1/multilayer_processing";
+      
+      // Show loading state
+      const analyzeButton = document.querySelector('.analyze');
+      const originalText = analyzeButton.textContent;
+      analyzeButton.textContent = "Analyzing...";
+      analyzeButton.disabled = true;
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      console.log('Sending request to:', apiUrl);
+
+      // Send request to API
+      fetch(apiUrl, {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Success:', data);
+        alert("Analysis completed successfully! Opening results in new page...");
+        openResultsPage(data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert(`Analysis failed: ${error.message}`);
+      })
+      .finally(() => {
+        // Reset button state
+        analyzeButton.textContent = originalText;
+        analyzeButton.disabled = false;
+      });
+    }
+
+    function openResultsPage(data) {
+      // Create HTML content for results page
+      const features = data.features || [];
+      
+      const resultsHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analysis Results - Whisp</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding: 20px;
+      background-color: #1a1a1a;
+      border-radius: 6px;
+    }
+    
+    .results-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #fff;
+    }
+    
+    .results-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .results-buttons button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    .view-map-btn {
+      background-color: #6366f1;
+      color: white;
+    }
+    
+    .download-btn {
+      background-color: #f59e0b;
+      color: white;
+    }
+    
+    .back-btn {
+      background-color: #6b7280;
+      color: white;
+    }
+    
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #2a2a2a;
+      border-radius: 6px;
+      overflow: hidden;
+      font-size: 12px;
+    }
+    
+    .results-table th,
+    .results-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #404040;
+    }
+    
+    .results-table th {
+      background-color: #3a3a3a;
+      color: #ccc;
+      font-weight: bold;
+      font-size: 11px;
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+    }
+    
+    .results-table td {
+      color: #fff;
+    }
+    
+    .results-table tr:hover {
+      background-color: #333;
+    }
+    
+    .results-table tr:nth-child(even) {
+      background-color: #252525;
+    }
+    
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #1a1a1a;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #ccc;
+    }
+    
+    .pagination-controls {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .pagination-controls button {
+      padding: 8px 12px;
+      background-color: #3a3a3a;
+      color: #ccc;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    .pagination-controls button:hover {
+      background-color: #4a4a4a;
+    }
+    
+    .pagination-controls button.active {
+      background-color: #6366f1;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="results-header">
+      <div class="results-title">Analysis Results</div>
+      <div class="results-buttons">
+        <button class="back-btn" onclick="window.close()">← Back</button>
+        <button class="view-map-btn" onclick="viewInWhispMap()">View in Whisp Map</button>
+        <button class="download-btn" onclick="downloadResults()">Download</button>
+      </div>
+    </div>
+    
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>PLOTID</th>
+          <th>AREA</th>
+          <th>GEOMETRY TYPE</th>
+          <th>COUNTRY</th>
+          <th>PRODUCER COUNTRY</th>
+          <th>ADMIN LEVEL 1</th>
+          <th>CENTROID LON</th>
+          <th>CENTROID LAT</th>
+          <th>UNIT</th>
+          <th>IN WATERBODY</th>
+          <th>EUFO 2020</th>
+          <th>GLAD PRIMARY</th>
+          <th>TMF UNDIST</th>
+          <th>GFC TC 2020</th>
+          <th>FOREST FDAP</th>
+          <th>ESA TC 2020</th>
+          <th>TMF PLANT</th>
+          <th>OIL PALM DESCALS</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${features.map((feature, index) => {
+          const props = feature.properties || {};
+          const geom = feature.geometry || {};
+          
+          return `
+            <tr>
+              <td>${props.plotId || index + 1}</td>
+              <td>${props.Area ? props.Area.toFixed(2) : 'N/A'}</td>
+              <td>${props.Geometry_type || geom.type || 'Polygon'}</td>
+              <td>${props.Country || 'N/A'}</td>
+              <td>${props.ProducerCountry || 'N/A'}</td>
+              <td>${props.Admin_Level_1 || 'N/A'}</td>
+              <td>${props.Centroid_lon ? props.Centroid_lon.toFixed(2) : 'N/A'}</td>
+              <td>${props.Centroid_lat ? props.Centroid_lat.toFixed(2) : 'N/A'}</td>
+              <td>${props.Unit || 'ha'}</td>
+              <td>${props.In_waterbody || 'false'}</td>
+              <td>${props.EUFO_2020 ? props.EUFO_2020.toFixed(2) : '0'}</td>
+              <td>${props.GLAD_Primary ? props.GLAD_Primary.toFixed(2) : '0'}</td>
+              <td>${props.TMF_undist ? props.TMF_undist.toFixed(2) : '0'}</td>
+              <td>${props.GFC_TC_2020 ? props.GFC_TC_2020.toFixed(2) : '0'}</td>
+              <td>${props.Forest_FDaP ? props.Forest_FDaP.toFixed(2) : '0'}</td>
+              <td>${props.ESA_TC_2020 ? props.ESA_TC_2020.toFixed(2) : '0'}</td>
+              <td>${props.TMF_plant ? props.TMF_plant.toFixed(2) : '0'}</td>
+              <td>${props.Oil_palm_Descals ? props.Oil_palm_Descals.toFixed(2) : '0'}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+    
+    <div class="pagination">
+      <div>Total: ${features.length} records | Rows per page: 
+        <select style="background-color: #3a3a3a; color: #ccc; border: none; padding: 4px;">
+          <option>10</option>
+          <option>25</option>
+          <option>50</option>
+          <option selected>All</option>
+        </select>
+      </div>
+      <div>Page 1 of 1</div>
+      <div class="pagination-controls">
+        <button>&lt;&lt;</button>
+        <button>&lt;</button>
+        <button class="active">1</button>
+        <button>&gt;</button>
+        <button>&gt;&gt;</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function viewInWhispMap() {
+      alert("View in Whisp Map functionality would be implemented here");
+    }
+
+    function downloadResults() {
+      const table = document.querySelector('.results-table');
+      let csv = '';
+      
+      // Get headers
+      const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent);
+      csv += headers.join(',') + '\n';
+      
+      // Get data rows
+      const rows = Array.from(table.querySelectorAll('tbody tr'));
+      rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent);
+        csv += cells.join(',') + '\n';
+      });
+      
+      // Download CSV
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'whisp_analysis_results.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>`;
+
+      // Open results in new window/tab
+      const newWindow = window.open('', '_blank');
+      newWindow.document.write(resultsHTML);
+      newWindow.document.close();
+    }
+  </script>
+</body>
+</html>

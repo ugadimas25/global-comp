@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Forest Layers</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .control-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        
+        .layer-control {
+            margin: 5px 0;
+        }
+        
+        label {
+            cursor: pointer;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <div class="control-panel">
+        <h4>Forest Layers Test</h4>
+        <div class="layer-control">
+            <input type="checkbox" id="eufo2020" checked>
+            <span style="display:inline-block;width:14px;height:14px;background:#8fda54;margin-right:6px;border-radius:3px;vertical-align:middle;"></span>
+            <label for="eufo2020">EUFO 2020</label>
+        </div>
+        <div class="layer-control">
+            <input type="checkbox" id="primaryForest2020" checked>
+            <span style="display:inline-block;width:14px;height:14px;background:#8fda54;margin-right:6px;border-radius:3px;vertical-align:middle;"></span>
+            <label for="primaryForest2020">Primary Forest 2020</label>
+        </div>
+        <div class="layer-control">
+            <input type="checkbox" id="sbtnNaturalLands" checked>
+            <span style="display:inline-block;width:14px;height:14px;background:#8fda54;margin-right:6px;border-radius:3px;vertical-align:middle;"></span>
+            <label for="sbtnNaturalLands">SBTN Natural Lands</label>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // Initialize map centered on Kalimantan (tropical area)
+        const map = L.map('map').setView([-1, 114], 5);
+
+        // Add base layer (OpenStreetMap)
+        const baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Forest Layers only
+        const forestLayers = {
+            eufo2020: L.tileLayer(`${API_BASE_URL}/data/v1/gee/tiles/eufo_2020/{z}/{x}/{y}?style=green`, {
+                attribution: 'EUFO 2020',
+                opacity: 0.6
+            }),
+            primaryForest2020: L.tileLayer(`${API_BASE_URL}/data/v1/gee/tiles/primary_forest_2020/{z}/{x}/{y}?style=green`, {
+                attribution: 'Primary Forest 2020',
+                opacity: 0.7
+            }),
+            sbtnNaturalLands: L.tileLayer(`${API_BASE_URL}/data/v1/gee/tiles/sbtn_natural_lands/{z}/{x}/{y}?style=green`, {
+                attribution: 'SBTN Natural Lands',
+                opacity: 0.7
+            })
+        };
+
+        // Add all forest layers to map
+        Object.keys(forestLayers).forEach(key => {
+            console.log(`Adding forest layer: ${key}`);
+            forestLayers[key].addTo(map);
+            
+            // Add error handling
+            forestLayers[key].on('tileerror', (e) => {
+                console.error(`Tile error for ${key}:`, e.tile.src);
+            });
+            
+            forestLayers[key].on('loading', () => {
+                console.log(`Loading ${key}...`);
+            });
+            
+            forestLayers[key].on('load', () => {
+                console.log(`Loaded ${key}`);
+            });
+        });
+
+        // Toggle layer on checkbox change
+        Object.keys(forestLayers).forEach(key => {
+            document.getElementById(key).addEventListener('change', function(e) {
+                console.log(`Toggling ${key}: ${e.target.checked}`);
+                if (e.target.checked) {
+                    forestLayers[key].addTo(map);
+                } else {
+                    map.removeLayer(forestLayers[key]);
+                }
+            });
+        });
+
+        // Add click handler for coordinates
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`Coordinates: ${lat}, ${lng}`)
+                .openOn(map);
+        });
+
+        console.log('Forest layers test initialized');
+    </script>
+</body>
+</html>

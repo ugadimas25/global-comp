@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whisp Geospatial Tool</title>
+  
+  <!-- Authentication Check -->
+  <script>
+    // Check authentication before loading page
+    window.addEventListener('DOMContentLoaded', () => {
+      const isLoggedIn = localStorage.getItem('whispLoggedIn');
+      const loginTime = localStorage.getItem('whispLoginTime');
+      const username = localStorage.getItem('whispUsername');
+      
+      if (!isLoggedIn || isLoggedIn !== 'true') {
+        // Not logged in, redirect to login
+        window.location.href = 'login.html';
+        return;
+      }
+      
+      if (loginTime) {
+        const loginDate = new Date(loginTime);
+        const now = new Date();
+        const diffHours = (now - loginDate) / (1000 * 60 * 60);
+        
+        // Auto logout after 24 hours
+        if (diffHours >= 24) {
+          localStorage.removeItem('whispLoggedIn');
+          localStorage.removeItem('whispUsername');
+          localStorage.removeItem('whispLoginTime');
+          window.location.href = 'login.html';
+          return;
+        }
+      }
+      
+      // Show welcome message
+      if (username) {
+        const welcomeMsg = document.getElementById('welcomeMessage');
+        if (welcomeMsg) {
+          welcomeMsg.innerHTML = `Welcome back, <strong>${username}</strong>! 👋`;
+          welcomeMsg.style.display = 'block';
+        }
+      }
+    });
+  </script>
+  
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .top-nav {
+      background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid #4b5563;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .compliance-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .compliance-btn {
+      background: rgba(59, 130, 246, 0.8);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .compliance-btn:hover {
+      background: rgba(59, 130, 246, 1);
+      transform: translateY(-1px);
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background-color: #1f2937;
+      min-width: 220px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+      border-radius: 6px;
+      border: 1px solid #374151;
+      z-index: 1000;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .dropdown-content a {
+      color: #d1d5db;
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid #374151;
+    }
+
+    .dropdown-content a:last-child {
+      border-bottom: none;
+    }
+
+    .dropdown-content a:hover {
+      background-color: #374151;
+      color: white;
+    }
+
+    /* Remove hover dropdown behavior */
+    .dropdown-content.show {
+      display: block;
+    }
+
+    .subscribe-btn {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+
+    .subscribe-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Subscription Modal Styles */
+    .subscription-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .subscription-modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border: 1px solid #374151;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .modal-title {
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+      margin: 0 0 10px 0;
+    }
+
+    .modal-subtitle {
+      color: #9ca3af;
+      font-size: 16px;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .pricing-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid #374151;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .pricing-card:hover {
+      transform: translateY(-4px);
+      border-color: #3b82f6;
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
+    }
+
+    .pricing-card.featured {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .plan-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .plan-price {
+      font-size: 24px;
+      font-weight: bold;
+      color: #3b82f6;
+      margin-bottom: 4px;
+    }
+
+    .plan-period {
+      color: #9ca3af;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .plan-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 24px 0;
+    }
+
+    .plan-features li {
+      color: #d1d5db;
+      padding: 6px 0;
+      font-size: 14px;
+    }
+
+    .plan-features li:before {
+      content: "✓";
+      color: #10b981;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .plan-btn {
+      width: 100%;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+
+    .plan-btn.primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+    }
+
+    .plan-btn.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+
+    .plan-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid #374151;
+    }
+
+    .plan-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .quota-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .quota-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 16px;
+    }
+
+    .quota-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid #374151;
+    }
+
+    .quota-item:last-child {
+      border-bottom: none;
+    }
+
+    .quota-label {
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    .quota-value {
+      color: #3b82f6;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .container {
+      margin: 30px auto;
+      max-width: 700px;
+      transition: max-width 0.3s ease;
+    }
+
+    .container.expanded {
+      max-width: 95%;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .description {
+      font-size: 15px;
+      color: #ccc;
+      line-height: 1.6;
+    }
+
+    a {
+      color: #4da6ff;
+    }
+
+    .buttons {
+      margin: 20px;
+    }
+
+    .buttons button {
+      padding: 10px 20px;
+      margin: 0 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .login {
+      background-color: #3366ff;
+      color: white;
+      border: none;
+    }
+
+    .register {
+      background-color: #00cc66;
+      color: white;
+      border: none;
+    }
+
+    .submit-box {
+      background-color: #1a1a1a;
+      border-radius: 6px;
+      padding: 20px;
+      margin-top: 30px;
+      width: 100%;
+      box-sizing: border-box;
+      transition: all 0.3s ease;
+    }
+
+    .tab-buttons {
+      margin-bottom: 10px;
+    }
+
+    .tab-buttons button {
+      margin: 0 5px;
+      padding: 8px 12px;
+      background-color: #333;
+      color: white;
+      border: none;
+    }
+
+    .drop-zone {
+      margin: 20px auto;
+      border: 2px dashed #555;
+      padding: 30px;
+      color: #888;
+      cursor: pointer;
+    }
+
+    .action-buttons {
+      margin-top: 15px;
+    }
+
+    .action-buttons button {
+      margin: 5px;
+      padding: 10px 16px;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .example {
+      background-color: #3366ff;
+      color: white;
+    }
+
+    .clear {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .analyze {
+      background-color: #00cc66;
+      color: white;
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .results-container {
+      background-color: #1a1a1a;
+      border-radius: 6px;
+      padding: 20px;
+      margin-top: 20px;
+      text-align: left;
+      overflow-x: auto;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .results-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    .results-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .results-buttons button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .view-map-btn {
+      background-color: #6366f1;
+      color: white;
+    }
+
+    .download-btn {
+      background-color: #f59e0b;
+      color: white;
+    }
+
+    .download-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .download-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background-color: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 6px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      min-width: 180px;
+      overflow: hidden;
+    }
+
+    .download-menu button {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: #ccc;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid #444;
+    }
+
+    .download-menu button:last-child {
+      border-bottom: none;
+    }
+
+    .download-menu button:hover {
+      background-color: #3a3a3a;
+      color: white;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #2a2a2a;
+      border-radius: 6px;
+      overflow: hidden;
+      font-size: 12px;
+      min-width: 900px;
+    }
+
+    .results-table th,
+    .results-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid #404040;
+    }
+
+    .results-table th {
+      background-color: #3a3a3a;
+      color: #ccc;
+      font-weight: bold;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .results-table td {
+      color: #fff;
+    }
+
+    .results-table tr:hover {
+      background-color: #333;
+    }
+
+    .results-table tr:nth-child(even) {
+      background-color: #252525;
+    }
+
+    /* Badge Styles for New API Response */
+    .risk-badge, .compliance-badge, .loss-badge {
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .risk-high, .loss-high {
+      background-color: #dc2626;
+      color: white;
+    }
+
+    .risk-medium {
+      background-color: #f59e0b;
+      color: white;
+    }
+
+    .risk-low, .loss-low {
+      background-color: #10b981;
+      color: white;
+    }
+
+    .compliance-compliant {
+      background-color: #10b981;
+      color: white;
+    }
+
+    .compliance-non_compliant {
+      background-color: #dc2626;
+      color: white;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      font-size: 12px;
+      color: #ccc;
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 5px;
+    }
+
+    .pagination-controls button {
+      padding: 4px 8px;
+      background-color: #3a3a3a;
+      color: #ccc;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    .pagination-controls button:hover {
+      background-color: #4a4a4a;
+    }
+
+    .pagination-controls button.active {
+      background-color: #6366f1;
+      color: white;
+    }
+
+    /* Responsive design for mobile */
+    @media (max-width: 768px) {
+      .container {
+        margin: 15px;
+        max-width: none;
+      }
+      
+      .container.expanded {
+        margin: 10px;
+      }
+      
+      .results-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      
+      .results-buttons {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .results-table {
+        font-size: 10px;
+        min-width: 700px;
+      }
+      
+      .results-table th,
+      .results-table td {
+        padding: 6px 8px;
+      }
+      
+      .pagination {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <div class="top-nav">
+    <div class="nav-left">
+      <!-- Logo or Brand name could go here -->
+      <h3 style="margin: 0; color: white; font-size: 18px;">Global Compliance Tools</h3>
+    </div>
+    
+    <div class="nav-right">
+      <!-- Compliance Tools Dropdown -->
+      <div class="compliance-dropdown">
+        <button class="compliance-btn" onclick="toggleComplianceDropdown()">
+          <span>🏛️</span>
+          Compliance Tools
+          <span>▼</span>
+        </button>
+        <div class="dropdown-content" id="complianceDropdown">
+          <a href="#" onclick="selectCompliance('EUDR')">
+            <strong>🇪🇺 EUDR</strong><br>
+            <small>EU Deforestation Regulation</small>
+          </a>
+          <a href="rainforest-alliance.html">
+            <strong>🌳 Rainforest Alliance</strong><br>
+            <small>Sustainable Agriculture Certification</small>
+          </a>
+          <a href="fsc.html">
+            <strong>🏆 Forest Stewardship Council</strong><br>
+            <small>Responsible Forest Management</small>
+          </a>
+        </div>
+      </div>
+      
+      <button class="subscribe-btn" onclick="openSubscribe()">
+        ⭐ Subscribe
+      </button>
+      <button onclick="logout()" style="
+        background: rgba(220, 38, 38, 0.8);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        margin-left: 12px;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+      " onmouseover="this.style.background='rgba(220, 38, 38, 1)'" 
+         onmouseout="this.style.background='rgba(220, 38, 38, 0.8)'">
+        🚪 Logout
+      </button>
+    </div>
+  </div>
+
+  <!-- Subscription Modal -->
+  <div class="subscription-modal" id="subscriptionModal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeSubscribe()">&times;</button>
+      
+      <div class="modal-header">
+        <h2 class="modal-title">Choose Your Plan</h2>
+        <p class="modal-subtitle">Select the perfect plan for your compliance needs</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- BASIC Plan -->
+        <div class="pricing-card">
+          <h3 class="plan-name">BASIC</h3>
+          <div class="plan-price">$0.00</div>
+          <div class="plan-period">/month</div>
+          <ul class="plan-features">
+            <li>10 requests per month</li>
+            <li>10 monthly requests</li>
+            <li>Basic support</li>
+            <li>Standard API access</li>
+          </ul>
+          <button class="plan-btn secondary" onclick="selectPlan('basic')">Get Started</button>
+        </div>
+
+        <!-- PRO Plan -->
+        <div class="pricing-card featured">
+          <h3 class="plan-name">PRO</h3>
+          <div class="plan-price">$25.00</div>
+          <div class="plan-period">/month</div>
+          <ul class="plan-features">
+            <li>1000 requests per month</li>
+            <li>1000 monthly requests</li>
+            <li>Priority support</li>
+            <li>Advanced analytics</li>
+            <li>Compliance reporting</li>
+          </ul>
+          <button class="plan-btn primary" onclick="selectPlan('pro')">Choose Pro</button>
+        </div>
+
+        <!-- ULTRA Plan -->
+        <div class="pricing-card">
+          <h3 class="plan-name">ULTRA</h3>
+          <div class="plan-price">$100.00</div>
+          <div class="plan-period">/month</div>
+          <ul class="plan-features">
+            <li>Unlimited requests</li>
+            <li>Custom integrations</li>
+            <li>API Monitoring dashboard</li>
+            <li>24/7 phone support</li>
+            <li>Dedicated account manager</li>
+          </ul>
+          <button class="plan-btn secondary" onclick="selectPlan('ultra')">Choose Ultra</button>
+        </div>
+      </div>
+
+      <div class="quota-section">
+        <h3 class="quota-title">API Quotas & Limits</h3>
+        <div class="quota-item">
+          <span class="quota-label">Basic Plan</span>
+          <span class="quota-value">10 requests / month</span>
+        </div>
+        <div class="quota-item">
+          <span class="quota-label">Pro Plan</span>
+          <span class="quota-value">1,000 requests / month</span>
+        </div>
+        <div class="quota-item">
+          <span class="quota-label">Ultra Plan</span>
+          <span class="quota-value">Unlimited requests</span>
+        </div>
+        <div class="quota-item">
+          <span class="quota-label">Rate limit</span>
+          <span class="quota-value">One request per endpoint</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Welcome Message -->
+  <div id="welcomeMessage" style="
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 15px 20px;
+    margin: 20px auto;
+    max-width: 700px;
+    border-radius: 8px;
+    font-size: 16px;
+    display: none;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  ">
+    Welcome back! 👋
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 20px;">
+      <h1 style="margin: 0;">Welcome to Global Compliance Tools</h1>
+    </div>
+    
+    <p class="description">
+      Welcome to Whisp, a geospatial analysis tool designed to support zero-deforestation regulation claims. 
+      Upload your geometries in WKT or GeoJSON format here to receive a plot- or point-based analysis from our 
+      <a href="#">API</a>, calculated from carefully selected 
+      <a href="#">global and regional map datasets</a> processed via Google Earth Engine.
+    </p>
+
+    <div class="submit-box">
+      <h2>Submit Geometry</h2>
+      <div class="tab-buttons">
+        <button>Submit Geometry</button>
+        <button>Submit Geo IDs</button>
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        Drag or click to upload a file<br/>
+        <small>Only .txt, .json and .geojson files are accepted.</small>
+        <input type="file" id="fileInput" style="display: none;" />
+      </div>
+
+      <div class="action-buttons">
+        <button class="example" onclick="downloadExample()">📥 Example</button>
+        <button class="clear" onclick="clearUpload()">Clear</button>
+        <button class="analyze" onclick="analyzeUpload()">Analyze</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="#" style="color:#4da6ff;">Terms of Service</a>
+    </div>
+  </div>
+
+  <script src="js/submit-page.js"></script>
+  
+  <!-- Navigation Functions -->
+  <script>
+    function toggleComplianceDropdown() {
+      const dropdown = document.getElementById('complianceDropdown');
+      dropdown.classList.toggle('show');
+    }
+
+    function selectCompliance(type) {
+      console.log('Selected compliance type:', type);
+      
+      // Close dropdown first
+      const dropdown = document.getElementById('complianceDropdown');
+      dropdown.classList.remove('show');
+      
+      // Update UI to show selected compliance type
+      const complianceBtn = document.querySelector('.compliance-btn');
+      let icon = '';
+      let title = '';
+      
+      switch(type) {
+        case 'EUDR':
+          icon = '🇪🇺';
+          title = 'EUDR';
+          break;
+        case 'Rainforest Alliance':
+          icon = '🌳';
+          title = 'Rainforest Alliance';
+          break;
+        case 'FSC':
+          icon = '🏆';
+          title = 'FSC';
+          break;
+        default:
+          icon = '🏛️';
+          title = 'Compliance Tools';
+      }
+      
+      complianceBtn.innerHTML = `
+        <span>${icon}</span>
+        ${title}
+        <span>▼</span>
+      `;
+      
+      // Store selected compliance type
+      localStorage.setItem('selectedCompliance', type);
+      
+      // You can add specific logic for each compliance type here
+      alert(`Switched to ${type} compliance mode`);
+    }
+    
+    function openSubscribe() {
+      console.log('Opening subscription modal...');
+      const modal = document.getElementById('subscriptionModal');
+      modal.classList.add('show');
+      
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeSubscribe() {
+      console.log('Closing subscription modal...');
+      const modal = document.getElementById('subscriptionModal');
+      modal.classList.remove('show');
+      
+      // Restore body scroll
+      document.body.style.overflow = 'auto';
+    }
+    
+    function selectPlan(planType) {
+      console.log('Selected plan:', planType);
+      
+      // Store selected plan
+      localStorage.setItem('selectedPlan', planType);
+      
+      // Close modal
+      closeSubscribe();
+      
+      // Show confirmation
+      alert(`Great choice! You've selected the ${planType.toUpperCase()} plan. 🎉\n\nFeatures will be activated shortly.`);
+      
+      // You can add plan-specific logic here
+      switch(planType) {
+        case 'basic':
+          console.log('Activating basic plan features...');
+          break;
+        case 'pro':
+          console.log('Activating pro plan features...');
+          break;
+        case 'ultra':
+          console.log('Activating ultra plan features...');
+          break;
+      }
+    }
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', (event) => {
+      const modal = document.getElementById('subscriptionModal');
+      if (event.target === modal) {
+        closeSubscribe();
+      }
+      
+      // Close compliance dropdown when clicking outside
+      const complianceDropdown = document.querySelector('.compliance-dropdown');
+      const dropdown = document.getElementById('complianceDropdown');
+      if (!complianceDropdown.contains(event.target)) {
+        dropdown.classList.remove('show');
+      }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        closeSubscribe();
+      }
+    });
+    
+    // Load saved compliance type on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedCompliance = localStorage.getItem('selectedCompliance');
+      if (savedCompliance) {
+        selectCompliance(savedCompliance);
+      }
+    });
+  </script>
+</body>
+</html>
