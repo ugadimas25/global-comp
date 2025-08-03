@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Debug Layers - EUDR Map Viewer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      background-color: #1a1a1a;
+      padding: 15px 20px;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .debug-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background-color: rgba(26, 26, 26, 0.9);
+      padding: 15px;
+      border-radius: 6px;
+      min-width: 250px;
+    }
+
+    .debug-controls button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      background-color: #6366f1;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .debug-controls button:hover {
+      background-color: #5855eb;
+    }
+
+    .map-container {
+      height: calc(100vh - 80px);
+      position: relative;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    .layer-controls {
+      position: absolute;
+      top: 80px;
+      left: 10px;
+      z-index: 1000;
+      background-color: rgba(26, 26, 26, 0.95);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 0;
+      min-width: 300px;
+      max-height: 500px;
+      overflow-y: auto;
+      backdrop-filter: blur(10px);
+    }
+
+    .layer-sections {
+      padding: 15px;
+    }
+
+    .layer-section {
+      margin-bottom: 20px;
+    }
+
+    .layer-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .layer-section h4 {
+      margin: 0 0 15px 0;
+      color: #4da6ff;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 8px;
+    }
+
+    .layer-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 8px;
+      background-color: rgba(42, 42, 42, 0.5);
+      border-radius: 6px;
+      transition: background-color 0.2s ease;
+    }
+
+    .layer-item:hover {
+      background-color: rgba(42, 42, 42, 0.8);
+    }
+
+    .layer-checkbox {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .layer-checkbox input[type="checkbox"] {
+      display: none;
+    }
+
+    .checkmark {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ccc;
+      border-radius: 3px;
+      margin-right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .layer-checkbox input[type="checkbox"]:checked + .checkmark::after {
+      content: '✓';
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+    }
+
+    .layer-name {
+      font-size: 14px;
+      color: #fff;
+    }
+
+    .layer-opacity {
+      margin-left: 15px;
+      min-width: 80px;
+    }
+
+    .layer-opacity input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: #404040;
+      border-radius: 2px;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .layer-opacity input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #4da6ff;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    #error {
+      position: fixed;
+      top: 100px;
+      right: 10px;
+      background-color: #dc2626;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      z-index: 2000;
+      display: none;
+      max-width: 300px;
+    }
+
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px;
+      border-radius: 6px;
+      z-index: 2000;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔍 Debug Layers - EUDR Map Viewer</h1>
+    <a href="index.html" class="back-btn">← Back to Home</a>
+  </div>
+
+  <div class="map-container">
+    <div id="map"></div>
+    
+    <!-- Debug Controls -->
+    <div class="debug-controls">
+      <h4>🔧 Debug Tools</h4>
+      <button onclick="mapViewer.testAllLayers()">Test All Layers</button>
+      <button onclick="mapViewer.showLayerInfo()">Show Layer Info</button>
+      <button onclick="testSpecificLayer()">Test GFW Layer</button>
+      <button onclick="testAPILayer()">Test API Layer</button>
+      <button onclick="checkMapState()">Check Map State</button>
+      <button onclick="console.clear()">Clear Console</button>
+    </div>
+
+    <!-- Layer Controls -->
+    <div id="layerControls" class="layer-controls"></div>
+  </div>
+
+  <!-- Error Display -->
+  <div id="error"></div>
+  
+  <!-- Loading Display -->
+  <div id="loading">Loading...</div>
+
+  <!-- Feature Info (hidden, just for JS compatibility) -->
+  <div id="featureInfo" style="display: none;"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/map-viewer.js"></script>
+  
+  <script>
+    // Additional debug functions
+    function testSpecificLayer() {
+      console.log('=== TESTING GFW LAYERS ===');
+      mapViewer.testGFWLayers();
+    }
+    
+    function testAPILayer() {
+      console.log('=== TESTING API LAYER ===');
+      mapViewer.testLayerUrl('eufo2020');
+      mapViewer.testLayerUrl('primaryForest2020');
+    }
+    
+    function checkMapState() {
+      console.log('=== MAP STATE ===');
+      console.log('Map zoom:', mapViewer.map.getZoom());
+      console.log('Map center:', mapViewer.map.getCenter());
+      console.log('Map panes:', Object.keys(mapViewer.map.getPanes()));
+      console.log('Overlay pane zIndex:', mapViewer.map.getPane('overlayPane').style.zIndex);
+      
+      // Check which layers are actually added to map
+      let activeLayers = [];
+      mapViewer.orderedLayers.forEach(key => {
+        if (mapViewer.map.hasLayer(mapViewer.overlayLayers[key])) {
+          activeLayers.push(key);
+        }
+      });
+      console.log('Active layers on map:', activeLayers);
+      
+      // Check checkboxes state
+      mapViewer.orderedLayers.forEach(key => {
+        const checkbox = document.getElementById(`${key}Toggle`);
+        if (checkbox) {
+          console.log(`${key} checkbox: ${checkbox.checked ? 'checked' : 'unchecked'}`);
+        } else {
+          console.log(`${key} checkbox: NOT FOUND`);
+        }
+      });
+    }
+    
+    // Auto-run diagnostics on load
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        console.log('🚀 Auto-running diagnostics...');
+        mapViewer.testAllLayers();
+        checkMapState();
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

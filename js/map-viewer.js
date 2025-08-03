@@ -3,6 +3,7 @@ class WhispMapViewer {
   constructor() {
     this.map = null;
     this.geojsonLayer = null;
+    this.riskIconsLayer = null; // Layer for risk icons
     this.baseLayers = {};
     this.overlayLayers = {};
     this.currentOpacity = 0.7;
@@ -434,6 +435,9 @@ class WhispMapViewer {
     // Ensure geojson layer is on top
     this.geojsonLayer.bringToFront();
 
+    // Add risk icons to polygon centroids
+    this.addRiskIcons(features);
+
     // Fit map to bounds
     this.map.fitBounds(this.geojsonLayer.getBounds());
 
@@ -802,6 +806,243 @@ class WhispMapViewer {
     setTimeout(() => {
       error.style.display = 'none';
     }, 5000);
+  }
+
+  addRiskIcons(features) {
+    // Remove existing risk icons layer if it exists
+    if (this.riskIconsLayer) {
+      this.map.removeLayer(this.riskIconsLayer);
+    }
+
+    // Create a new layer group for risk icons
+    this.riskIconsLayer = L.layerGroup().addTo(this.map);
+
+    features.forEach(feature => {
+      const props = feature.properties || {};
+      const riskLevel = props.overall_compliance?.overall_risk;
+      
+      // Only add icons for high and low risk polygons
+      if (riskLevel === 'high' || riskLevel === 'low') {
+        const centroid = this.getPolygonCentroid(feature);
+        if (centroid) {
+          const icon = this.createRiskIcon(riskLevel);
+          const marker = L.marker(centroid, { icon: icon })
+            .addTo(this.riskIconsLayer);
+          
+          // Add click handler to fit bounds to polygon and show popup
+          marker.on('click', () => {
+            this.fitBoundsToFeature(feature);
+            this.showFeatureInfo(feature);
+          });
+
+          // Add tooltip with basic info and click instruction
+          const tooltipContent = `
+            <div style="text-align: center; font-weight: bold;">
+              ${riskLevel === 'high' ? '⚠️ HIGH RISK' : '✅ LOW RISK'}<br>
+              Plot: ${props.plot_id || 'N/A'}<br>
+              <small style="opacity: 0.8; font-weight: normal;">Click to zoom to polygon</small>
+            </div>
+          `;
+          marker.bindTooltip(tooltipContent, {
+            permanent: false,
+            direction: 'top',
+            className: 'risk-tooltip'
+          });
+        }
+      }
+    });
+
+    // Update icon sizes when zoom changes
+    this.map.on('zoomend', () => {
+      this.updateIconSizes();
+    });
+  }
+
+  getPolygonCentroid(feature) {
+    try {
+      if (feature.geometry.type === 'Polygon') {
+        const coordinates = feature.geometry.coordinates[0];
+        let x = 0, y = 0, area = 0;
+        
+        for (let i = 0, j = coordinates.length - 1; i < coordinates.length; j = i++) {
+          const xi = coordinates[i][0], yi = coordinates[i][1];
+          const xj = coordinates[j][0], yj = coordinates[j][1];
+          const a = xi * yj - xj * yi;
+          area += a;
+          x += (xi + xj) * a;
+          y += (yi + yj) * a;
+        }
+        
+        area *= 0.5;
+        return [y / (6 * area), x / (6 * area)];
+      } else if (feature.geometry.type === 'MultiPolygon') {
+        // For MultiPolygon, use the centroid of the largest polygon
+        let largestArea = 0;
+        let largestPolygon = null;
+        
+        feature.geometry.coordinates.forEach(polygon => {
+          const tempFeature = {
+            geometry: { type: 'Polygon', coordinates: polygon }
+          };
+          const centroid = this.getPolygonCentroid(tempFeature);
+          if (centroid) {
+            // Simple area calculation for comparison
+            const coordinates = polygon[0];
+            let area = 0;
+            for (let i = 0, j = coordinates.length - 1; i < coordinates.length; j = i++) {
+              area += (coordinates[j][0] + coordinates[i][0]) * (coordinates[j][1] - coordinates[i][1]);
+            }
+            area = Math.abs(area) / 2;
+            
+            if (area > largestArea) {
+              largestArea = area;
+              largestPolygon = tempFeature;
+            }
+          }
+        });
+        
+        return largestPolygon ? this.getPolygonCentroid(largestPolygon) : null;
+      }
+    } catch (error) {
+      console.error('Error calculating centroid:', error);
+      return null;
+    }
+  }
+
+  createRiskIcon(riskLevel) {
+    const zoom = this.map.getZoom();
+    const baseSize = this.getIconSizeForZoom(zoom);
+    
+    const iconConfig = {
+      high: {
+        color: '#dc2626', // Red for high risk
+        borderColor: '#991b1b',
+        icon: '⚠️'
+      },
+      low: {
+        color: '#10b981', // Green for low risk  
+        borderColor: '#047857',
+        icon: '✅'
+      }
+    };
+    
+    const config = iconConfig[riskLevel];
+    
+    return L.divIcon({
+      className: 'risk-icon',
+      html: `
+        <div style="
+          width: ${baseSize}px;
+          height: ${baseSize}px;
+          background-color: ${config.color};
+          border: 3px solid ${config.borderColor};
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: ${baseSize * 0.4}px;
+          color: white;
+          font-weight: bold;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          animation: ${riskLevel === 'high' ? 'pulse-red 2s infinite' : 'pulse-green 3s infinite'};
+        " 
+        onmouseover="this.style.transform='scale(1.2)'; this.style.zIndex='9999'; this.style.animation='none';"
+        onmouseout="this.style.transform='scale(1)'; this.style.zIndex='auto'; this.style.animation='${riskLevel === 'high' ? 'pulse-red 2s infinite' : 'pulse-green 3s infinite'}';"
+        >
+          <span style="
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+          ">
+            ${config.icon}
+          </span>
+        </div>
+      `,
+      iconSize: [baseSize, baseSize],
+      iconAnchor: [baseSize/2, baseSize/2],
+      popupAnchor: [0, -baseSize/2]
+    });
+  }
+
+  getIconSizeForZoom(zoom) {
+    // Responsive icon size based on zoom level
+    if (zoom >= 15) return 40;      // Very close zoom - large icons
+    if (zoom >= 12) return 32;      // Close zoom - medium-large icons
+    if (zoom >= 10) return 26;      // Medium zoom - medium icons
+    if (zoom >= 8) return 22;       // Default zoom - small-medium icons
+    if (zoom >= 6) return 18;       // Far zoom - small icons
+    return 16;                      // Very far zoom - very small icons
+  }
+
+  updateIconSizes() {
+    if (this.riskIconsLayer) {
+      this.riskIconsLayer.eachLayer(marker => {
+        const currentIcon = marker.getIcon();
+        const zoom = this.map.getZoom();
+        const newSize = this.getIconSizeForZoom(zoom);
+        
+        // Extract risk level from current icon HTML
+        const isHighRisk = currentIcon.options.html.includes('#dc2626');
+        const riskLevel = isHighRisk ? 'high' : 'low';
+        
+        // Create new icon with updated size
+        const newIcon = this.createRiskIcon(riskLevel);
+        marker.setIcon(newIcon);
+      });
+    }
+  }
+
+  fitBoundsToFeature(feature) {
+    try {
+      // Create a temporary GeoJSON layer for this feature to get its bounds
+      const tempLayer = L.geoJSON(feature);
+      const bounds = tempLayer.getBounds();
+      
+      // Fit the map to the feature bounds with some padding
+      this.map.fitBounds(bounds, {
+        padding: [20, 20], // Add 20px padding on all sides
+        maxZoom: 16 // Limit maximum zoom level for better view
+      });
+      
+      // Optional: Highlight the polygon temporarily
+      this.highlightPolygon(feature);
+      
+    } catch (error) {
+      console.error('Error fitting bounds to feature:', error);
+    }
+  }
+
+  highlightPolygon(feature) {
+    // Find the corresponding layer in geojsonLayer and highlight it temporarily
+    if (this.geojsonLayer) {
+      this.geojsonLayer.eachLayer(layer => {
+        if (layer.feature === feature) {
+          // Store original style
+          const originalStyle = {
+            weight: layer.options.weight,
+            color: layer.options.color,
+            opacity: layer.options.opacity
+          };
+          
+          // Apply highlight style
+          layer.setStyle({
+            weight: 5,
+            color: '#ffffff',
+            opacity: 1
+          });
+          
+          // Reset style after 2 seconds
+          setTimeout(() => {
+            layer.setStyle(originalStyle);
+          }, 2000);
+        }
+      });
+    }
   }
 }
 

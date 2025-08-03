@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EUDR Compliance System- Login</title>
+  <title>Global Climate Solution - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -12,17 +13,16 @@
     }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #0f172a;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
       position: relative;
+      overflow: hidden;
     }
 
-    /* Animated background particles */
     .background-animation {
       position: absolute;
       top: 0;
@@ -33,86 +33,151 @@
       z-index: 1;
     }
 
-    .particle {
+    .background-animation::before {
+      content: '';
       position: absolute;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 50%;
-      animation: float 6s ease-in-out infinite;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, #1e293b 0%, #334155 50%, #475569 100%);
+      animation: rotateBackground 20s linear infinite;
     }
 
-    .particle:nth-child(1) { width: 80px; height: 80px; left: 10%; animation-delay: 0s; }
-    .particle:nth-child(2) { width: 60px; height: 60px; left: 20%; animation-delay: 1s; }
-    .particle:nth-child(3) { width: 40px; height: 40px; left: 70%; animation-delay: 2s; }
-    .particle:nth-child(4) { width: 120px; height: 120px; left: 80%; animation-delay: 3s; }
-    .particle:nth-child(5) { width: 30px; height: 30px; left: 60%; animation-delay: 4s; }
+    .background-animation::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+    }
+
+    @keyframes rotateBackground {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .geometric-shapes {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(59, 130, 246, 0.1));
+      animation: float 8s ease-in-out infinite;
+    }
+
+    .shape:nth-child(1) { 
+      width: 100px; 
+      height: 100px; 
+      top: 10%; 
+      left: 10%; 
+      animation-delay: 0s; 
+    }
+    
+    .shape:nth-child(2) { 
+      width: 60px; 
+      height: 60px; 
+      top: 70%; 
+      left: 80%; 
+      animation-delay: 2s; 
+    }
+    
+    .shape:nth-child(3) { 
+      width: 80px; 
+      height: 80px; 
+      top: 30%; 
+      left: 70%; 
+      animation-delay: 4s; 
+    }
 
     @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      50% { transform: translateY(-20px) rotate(180deg); }
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-30px) scale(1.1); }
     }
 
-    /* Login container */
     .login-container {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 50px 40px;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(71, 85, 105, 0.3);
+      border-radius: 24px;
+      padding: 48px 40px;
       width: 100%;
-      max-width: 450px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      max-width: 420px;
+      backdrop-filter: blur(20px);
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
       position: relative;
       z-index: 10;
-      animation: slideUp 0.8s ease-out;
+      animation: slideUpFade 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes slideUp {
+    @keyframes slideUpFade {
       from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(40px) scale(0.95);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
       }
     }
 
-    /* Header */
     .login-header {
       text-align: center;
       margin-bottom: 40px;
     }
 
     .logo {
-      font-size: 48px;
-      margin-bottom: 15px;
-      animation: pulse 2s ease-in-out infinite;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      font-size: 18px;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+      animation: logoPulse 3s ease-in-out infinite;
+      color: white;
+      font-weight: 700;
+      letter-spacing: -0.5px;
     }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+    @keyframes logoPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3); }
+      50% { transform: scale(1.05); box-shadow: 0 12px 40px rgba(16, 185, 129, 0.4); }
     }
 
     .login-title {
-      color: white;
+      color: #f8fafc;
       font-size: 28px;
       font-weight: 700;
       margin-bottom: 8px;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      letter-spacing: -0.025em;
     }
 
     .login-subtitle {
-      color: rgba(255, 255, 255, 0.8);
+      color: #94a3b8;
       font-size: 16px;
       font-weight: 400;
+      line-height: 1.5;
     }
 
-    /* Form */
     .login-form {
       display: flex;
       flex-direction: column;
-      gap: 25px;
+      gap: 24px;
     }
 
     .form-group {
@@ -121,55 +186,69 @@
 
     .form-input {
       width: 100%;
-      padding: 18px 20px 18px 55px;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.2);
+      padding: 16px 20px 16px 52px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid rgba(71, 85, 105, 0.3);
       border-radius: 12px;
-      color: white;
+      color: #f8fafc;
       font-size: 16px;
       font-weight: 500;
-      transition: all 0.3s ease;
-      backdrop-filter: blur(10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: inherit;
     }
 
     .form-input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
+      color: #64748b;
+      font-weight: 400;
     }
 
     .form-input:focus {
       outline: none;
-      border-color: rgba(255, 255, 255, 0.5);
-      background: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      border-color: #10b981;
+      background: rgba(15, 23, 42, 0.9);
+      box-shadow: 
+        0 0 0 3px rgba(16, 185, 129, 0.1),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(-1px);
     }
 
     .input-icon {
       position: absolute;
-      left: 20px;
+      left: 18px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 20px;
-      color: rgba(255, 255, 255, 0.7);
+      font-size: 18px;
+      color: #64748b;
+      transition: color 0.3s ease;
       z-index: 2;
     }
 
-    /* Login button */
+    .form-group:focus-within .input-icon {
+      color: #10b981;
+    }
+
     .login-button {
       width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      padding: 16px 24px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       border: none;
       border-radius: 12px;
       color: white;
-      font-size: 18px;
-      font-weight: 700;
+      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 10px 20px rgba(251, 191, 36, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      letter-spacing: 0.025em;
+      box-shadow: 
+        0 4px 12px rgba(16, 185, 129, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.1);
       position: relative;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: inherit;
     }
 
     .login-button::before {
@@ -180,7 +259,7 @@
       width: 100%;
       height: 100%;
       background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
+      transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .login-button:hover::before {
@@ -189,52 +268,75 @@
 
     .login-button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 15px 30px rgba(251, 191, 36, 0.4);
+      box-shadow: 
+        0 8px 25px rgba(16, 185, 129, 0.4),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
     }
 
     .login-button:active {
       transform: translateY(0px);
+      transition: transform 0.1s ease;
     }
 
     .login-button:disabled {
       opacity: 0.7;
       cursor: not-allowed;
       transform: none;
+      background: #374151;
     }
 
-    /* Error message */
+    .login-button:disabled:hover {
+      transform: none;
+      box-shadow: 
+        0 4px 12px rgba(16, 185, 129, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
     .error-message {
-      background: rgba(220, 38, 38, 0.2);
-      border: 1px solid rgba(220, 38, 38, 0.3);
-      border-radius: 8px;
-      padding: 15px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 12px;
+      padding: 16px;
       color: #fca5a5;
       font-size: 14px;
+      font-weight: 500;
       text-align: center;
       margin-top: 20px;
       display: none;
-      animation: shake 0.5s ease-in-out;
+      animation: slideInError 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
+    @keyframes slideInError {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
     }
 
     .error-message.show {
       display: block;
     }
 
-    /* Footer */
     .login-footer {
       text-align: center;
-      margin-top: 30px;
-      color: rgba(255, 255, 255, 0.6);
+      margin-top: 32px;
+      color: #64748b;
       font-size: 14px;
+      font-weight: 500;
     }
 
-    /* Loading spinner */
+    .login-footer p {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
     .spinner {
       display: none;
       width: 20px;
@@ -242,39 +344,22 @@
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 50%;
       border-top-color: white;
-      animation: spin 1s ease-in-out infinite;
-      margin-right: 10px;
+      animation: spin 1s linear infinite;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    /* Responsive */
-    @media (max-width: 480px) {
-      .login-container {
-        margin: 20px;
-        padding: 40px 30px;
-      }
-      
-      .login-title {
-        font-size: 24px;
-      }
-      
-      .login-subtitle {
-        font-size: 14px;
-      }
-    }
-
-    /* Success animation */
     .success-checkmark {
       display: none;
-      width: 60px;
-      height: 60px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
-      background: #10b981;
-      margin: 20px auto;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      margin: 24px auto;
       position: relative;
+      box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
     }
 
     .success-checkmark::after {
@@ -284,38 +369,86 @@
       left: 50%;
       transform: translate(-50%, -50%);
       color: white;
-      font-size: 30px;
-      font-weight: bold;
+      font-size: 24px;
+      font-weight: 600;
     }
 
     .success-checkmark.show {
       display: block;
-      animation: successPop 0.6s ease-out;
+      animation: successBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    @keyframes successPop {
-      0% { transform: scale(0); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+    @keyframes successBounce {
+      0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+      50% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
+
+    @media (max-width: 480px) {
+      .login-container {
+        margin: 20px;
+        padding: 32px 24px;
+        border-radius: 20px;
+      }
+      
+      .login-title {
+        font-size: 24px;
+      }
+      
+      .login-subtitle {
+        font-size: 14px;
+      }
+
+      .logo {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 20px;
+      }
+
+      .form-input {
+        padding: 14px 18px 14px 48px;
+        font-size: 16px;
+      }
+
+      .login-button {
+        padding: 14px 20px;
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .form-group {
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.1s; }
+    .form-group:nth-child(2) { animation-delay: 0.2s; }
+    .login-button { animation: fadeInUp 0.6s ease-out 0.3s both; }
   </style>
 </head>
 <body>
-  <!-- Background Animation -->
   <div class="background-animation">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
+    <div class="geometric-shapes">
+      <div class="shape"></div>
+      <div class="shape"></div>
+      <div class="shape"></div>
+    </div>
   </div>
 
-  <!-- Login Container -->
   <div class="login-container">
     <div class="login-header">
-      <div class="logo">🌿</div>
-      <h1 class="login-title">EUDR Compliance System</h1>
-      <p class="login-subtitle">Forest Compliance Analysis Platform</p>
+      <div class="logo">GCS</div>
+      <h1 class="login-title">Global Climate Solution</h1>
+      <p class="login-subtitle">Advanced Climate Intelligence Platform</p>
     </div>
 
     <form class="login-form" id="loginForm">
@@ -325,7 +458,7 @@
           type="text" 
           class="form-input" 
           id="username" 
-          placeholder="Username" 
+          placeholder="Enter your username" 
           required
           autocomplete="username"
         >
@@ -337,7 +470,7 @@
           type="password" 
           class="form-input" 
           id="password" 
-          placeholder="Password" 
+          placeholder="Enter your password" 
           required
           autocomplete="current-password"
         >
@@ -350,24 +483,22 @@
     </form>
 
     <div class="error-message" id="errorMessage">
-      ❌ Invalid username or password. Please try again.
+      ❌ Invalid credentials. Please check your username and password.
     </div>
 
     <div class="success-checkmark" id="successCheckmark"></div>
 
     <div class="login-footer">
-      <p>🛡️ Secure EUDR Compliance Portal</p>
+      <p>🛡️ Secure Climate Analytics Portal</p>
     </div>
   </div>
 
   <script>
-    // Login credentials
     const VALID_CREDENTIALS = {
       username: 'ugadimas',
       password: 'eudr1234'
     };
 
-    // DOM elements
     const loginForm = document.getElementById('loginForm');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
@@ -377,69 +508,60 @@
     const errorMessage = document.getElementById('errorMessage');
     const successCheckmark = document.getElementById('successCheckmark');
 
-    // Form submission handler
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const username = usernameInput.value.trim();
       const password = passwordInput.value;
 
-      // Hide error message
       errorMessage.classList.remove('show');
       
-      // Show loading state
       loginBtn.disabled = true;
       spinner.style.display = 'inline-block';
       btnText.textContent = 'Signing In...';
 
-      // Simulate loading delay (for better UX)
       await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Validate credentials
       if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
-        // Success
         spinner.style.display = 'none';
         btnText.textContent = 'Success!';
         loginBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
         
-        // Show success checkmark
         successCheckmark.classList.add('show');
         
-        // Store login state
         localStorage.setItem('whispLoggedIn', 'true');
         localStorage.setItem('whispUsername', username);
         localStorage.setItem('whispLoginTime', new Date().toISOString());
         
-        // Redirect to main application
         setTimeout(() => {
           window.location.href = 'index.html';
         }, 1200);
         
       } else {
-        // Error
         spinner.style.display = 'none';
         btnText.textContent = 'Sign In';
         loginBtn.disabled = false;
         
-        // Show error message
         errorMessage.classList.add('show');
         
-        // Shake animation for inputs
-        usernameInput.style.animation = 'shake 0.5s ease-in-out';
-        passwordInput.style.animation = 'shake 0.5s ease-in-out';
+        usernameInput.style.animation = 'none';
+        passwordInput.style.animation = 'none';
+        
+        setTimeout(() => {
+          usernameInput.style.animation = 'fadeInUp 0.3s ease-out';
+          passwordInput.style.animation = 'fadeInUp 0.3s ease-out';
+        }, 10);
         
         setTimeout(() => {
           usernameInput.style.animation = '';
           passwordInput.style.animation = '';
-        }, 500);
+        }, 300);
         
-        // Clear password field
         passwordInput.value = '';
         passwordInput.focus();
       }
     });
 
-    // Check if already logged in
     window.addEventListener('load', () => {
       const isLoggedIn = localStorage.getItem('whispLoggedIn');
       const loginTime = localStorage.getItem('whispLoginTime');
@@ -449,11 +571,9 @@
         const now = new Date();
         const diffHours = (now - loginDate) / (1000 * 60 * 60);
         
-        // Auto logout after 24 hours
         if (diffHours < 24) {
           window.location.href = 'index.html';
         } else {
-          // Clear expired session
           localStorage.removeItem('whispLoggedIn');
           localStorage.removeItem('whispUsername');
           localStorage.removeItem('whispLoginTime');
@@ -461,20 +581,20 @@
       }
     });
 
-    // Enter key navigation
     usernameInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         passwordInput.focus();
       }
     });
 
-    // Auto-focus username field
-    usernameInput.focus();
+    setTimeout(() => {
+      usernameInput.focus();
+    }, 300);
 
-    // Add floating animation to particles
-    document.querySelectorAll('.particle').forEach((particle, index) => {
-      particle.style.animationDelay = `${index * 0.5}s`;
-      particle.style.top = `${Math.random() * 100}%`;
+    document.querySelectorAll('.shape').forEach((shape, index) => {
+      shape.style.animationDelay = `${index * 1.5}s`;
+      shape.style.top = `${Math.random() * 80 + 10}%`;
+      shape.style.left = `${Math.random() * 80 + 10}%`;
     });
   </script>
 </body>
